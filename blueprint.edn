@@ -1,0 +1,90 @@
+{:itonami.blueprint/id "cloud-itonami-isic-3315"
+ :itonami.blueprint/name "Repair of Transport Equipment, Except Motor Vehicles"
+ :itonami.blueprint/isic-rev5 "3315"
+ :itonami.blueprint/domain :manufacturing/transport-equipment-repair
+ :itonami.blueprint/license "AGPL-3.0-or-later"
+ :itonami.blueprint/social-impact [:worker-safety :repair-access :circular-economy-repair-over-replace]
+ :itonami.blueprint/governor :transport-equipment-repair-governor
+ :itonami.blueprint/robotics false
+ :itonami.blueprint/required-technologies [:identity :forms :audit-ledger]
+ :itonami.blueprint/optional-technologies []
+ :itonami.blueprint/status :public-oss
+ :itonami.blueprint/maturity :implemented
+ :itonami.blueprint/implemented-slice
+ "`:transport-equipment-repair-governor` is implemented end-to-end in
+ `src/transport_equipment_repair` as a REPAIR-SHOP OPERATIONS
+ COORDINATION actor -- Repair Advisor (LLM proposal-only) ⊣ Repair
+ Governor (closed-op-allowlist / asset-verification / legal-basis /
+ unresolved-concern hard-gates). ISIC 3315 covers repair of TRANSPORT
+ EQUIPMENT, EXCEPT MOTOR VEHICLES specifically -- ships and boats,
+ aircraft and spacecraft, and railway locomotives and rolling stock --
+ distinct from sibling repair classes 3311 (fabricated metal products,
+ already :implemented), 3312 (machinery and equipment), 3313 (electronic
+ and optical equipment), 3314 (electrical equipment) and the residual
+ class 3319 (other equipment), and distinct from motor-vehicle repair
+ (a different ISIC section entirely). This actor deliberately holds NO
+ repair-equipment control authority and NO airworthiness/seaworthiness/
+ rail-safety-certification-authority (both are HARD, permanent governor
+ blocks, never overridable by human approval -- see `transport-
+ equipment-repair.governor` ns docstring), the SAME coordination-only,
+ narrower-than-4211 shape `cloud-itonami-isic-3311` (Repair of Fabricated
+ Metal Products), `cloud-itonami-isic-3314` (Repair of Electrical
+ Equipment) and `cloud-itonami-isic-3319` (Repair of Other Equipment)
+ already established in this fleet. Every one of its four proposal ops
+ (`:log-repair-record` / `:schedule-repair-operation` / `:flag-safety-
+ concern` / `:coordinate-return-to-service`) carries `:effect :propose`
+ ONLY -- the governor HARD-holds any proposal that doesn't
+ (`effect-not-propose-violations`), a structural invariant distinguishing
+ this actor from siblings that DO commit real-world actuation effects.
+
+ UNLIKE `cloud-itonami-isic-3311`'s equivalent check (which exempts
+ `:log-repair-record`), this actor's asset-verification HARD check
+ applies to ALL FOUR ops -- a repair-order/asset record must be
+ independently verified/registered BEFORE ANY action, a genuine,
+ documented domain-design requirement broader than 3311's own (see
+ `transport-equipment-repair.governor` ns docstring check 4). Like
+ `cloud-itonami-isic-3311`/`cloud-itonami-isic-3314`/`cloud-itonami-isic-
+ 3319`, this actor's `:schedule-repair-operation` AND `:coordinate-
+ return-to-service` MAY auto-commit at phase 3 when the governor is
+ completely clean -- asset independently verified, a per-(jurisdiction,
+ asset-class) pre-return-to-service inspection legal basis on file, and
+ no unresolved safety concern on record. Both ops are still only ever a
+ proposed diagnostic/repair/testing WINDOW or a proposed completed-unit
+ return-to-customer LOGISTICS coordination (pickup/delivery scheduling,
+ customer notification) -- NEVER a repair-equipment control command or
+ an airworthiness/seaworthiness/rail-safety-certification-authority
+ sign-off -- and this actor's own HARD checks (asset-verification,
+ legal-basis-on-file, no-unresolved-safety-concern) plus its forbidden-
+ action-class block on every certification-authority-decision marker
+ already gate the actual structural/airworthiness/seaworthiness/rail-
+ safety hazard surface independently of phase. `:flag-safety-concern` is
+ the ONLY permanent, unconditional `high-stakes` member in `transport-
+ equipment-repair.governor` -- see that ns docstring 'Actuation' section
+ for the full rationale.
+
+ Per-(jurisdiction, asset-class) (JPN/USA/DEU x marine-vessel/aircraft/
+ railway-rolling-stock -- 9 seeded pairs) post-repair inspection-before-
+ return-to-service legal-basis catalog (`transport-equipment-repair.
+ facts`) with real official sources, verified via live web search before
+ the catalog was written -- all NINE seeded pairs are honestly
+ `:qualitative` here (a procedural inspection/certification/release-to-
+ service duty, not a fixed numeric notice-lead-time), the same honest-
+ coverage convention `installation.facts`/`demolition.facts`/
+ `construction.facts`/`fabricated-metal-repair.facts`/`electrical-
+ equipment-repair.facts`/`other-equipment-repair.facts` establish. UNLIKE
+ `fabricated-metal-repair.facts` (a flat iso3 -> basis map), this
+ catalog is keyed `iso3 -> asset-class -> basis-map` because ships,
+ aircraft and railway rolling stock genuinely sit under structurally
+ disjoint regulatory regimes (classification-society/flag-administration
+ survey; airworthiness-authority release-to-service; rail-safety-
+ authority maintenance certification) even within the SAME jurisdiction
+ -- citing one combined law per jurisdiction would be dishonest. This
+ actor does not invent a numeric lead-time count where none of its nine
+ researched (jurisdiction, asset-class) sources gives one. This build
+ ships NO JVM-only interop anywhere in `src/` (no real Resend/Twilio
+ transports -- `transport-equipment-repair.notify` ships only the
+ portable mock notifier) per this workspace's cljs-first `.cljc`
+ runtime-priority rule. `:flag-safety-concern` ALWAYS escalates to a
+ human, at every phase, unconditionally. See `docs/` -- README
+ `Actuation` section -- for the full governor-check enumeration and the
+ rationale for each hard/soft rule."}
