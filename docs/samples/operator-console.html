@@ -2508,7 +2508,9 @@ img,svg { max-width: 100%; height: auto; }</style></head><body>
   <section class="card">
     <h2>Operation dispositions (this run)</h2>
     <p class="muted">One row per graph run. The outcome and the hold reason are classified from each run's own
-               audit trail; the detail text is the governor's own message, verbatim.</p>
+               audit trail; the detail text is the governor's own message, verbatim. Where a row reads
+               &ldquo;approved by&rdquo;, that approver comes from the run's <code>:approval-granted</code>
+               audit fact and NOT from the stored record &mdash; see the next section.</p>
     <table>
       <thead><tr><th>Thread</th><th>Op</th><th>Subject</th><th>Jurisdiction</th><th>Asset class</th><th>Outcome</th><th>Governor detail</th></tr></thead>
       <tbody>
@@ -2529,6 +2531,19 @@ img,svg { max-width: 100%; height: auto; }</style></head><body>
         <tr><td><code>t15</code></td><td><code>coordinate-return-to-service</code></td><td><code>asset-4</code></td><td>JPN</td><td><code>railway-rolling-stock</code></td><td><span class="critical">HARD hold &middot; unresolved-safety-concern</span></td><td>asset-4 は未解決の安全性懸念（構造健全性/耐空性/堪航性/鉄道安全）がある状態でのスケジュール/稼働再開調整提案</td></tr>
       </tbody>
     </table>
+  </section>
+  <section class="card">
+    <h2>Approver attribution &mdash; what the SSoT does and does not hold</h2>
+    <p class="muted">Re-checked against the real store at render time (every committed record in all four registers is scanned for an approver key, and the ledger for an <code>:approval-granted</code> fact), so this disclosure cannot drift away from the code.</p>
+    <table>
+      <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+      <tbody>
+        <tr><td>approver id(s) on this run&rsquo;s <code>:approval-granted</code> audit fact</td><td><code>op-1</code></td></tr>
+        <tr><td>carried on any committed record in the SSoT</td><td><span class="critical">no</span></td></tr>
+        <tr><td>carried on any fact in the store&rsquo;s audit ledger</td><td><span class="critical">no</span></td></tr>
+      </tbody>
+    </table>
+    <p><strong>The approver is not on the record.</strong> <code>operation</code>&rsquo;s <code>:request-approval</code> node attaches it at <code>[:value :approved-by]</code>, but <code>store/commit-record!</code> destructures <code>{:keys [op path value]}</code> and none of its four op branches ever reads <code>:approved-by</code> back out of <code>value</code>; the <code>:commit</code> node likewise appends only its <code>:committed</code> fact to the ledger, never the <code>:approval-granted</code> fact that carries <code>:by</code>. So the approver reaches neither the SSoT record nor the ledger. The &ldquo;approved by&rdquo; text in <em>Operation dispositions</em> above is joined back from the run&rsquo;s own audit trail, which really does carry it &mdash; this page states the gap plainly rather than printing an approver as though the store held one.</p>
   </section>
   <section class="card">
     <h2>Action gate (Repair Governor)</h2>

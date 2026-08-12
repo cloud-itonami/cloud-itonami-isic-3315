@@ -22,6 +22,15 @@
   against which asset id) are of course authored -- that is what a
   scenario is -- but no OUTPUT is.
 
+  Where the page cannot honestly show something, it says so instead of
+  inventing it: `approver-attribution` re-checks, at render time, whether
+  the human approver's id actually reached the SSoT record or the ledger
+  (it reaches NEITHER -- `store/commit-record!` never reads the
+  `[:value :approved-by]` key `operation` attaches, and only `:committed`
+  / `:governor-hold` facts are appended to the ledger), and the page
+  prints that gap plainly rather than an approver the store does not
+  hold.
+
   ## Why this scenario
 
   It walks one asset through a full coordination episode (log a repair
@@ -214,6 +223,43 @@
 
 (defn- fact-of [audit t] (first (filter #(= t (:t %)) audit)))
 
+(defn- deep-key-names
+  "Every key name appearing anywhere in a nested structure, as strings.
+  Used to ask the SSoT what it actually holds instead of assuming."
+  [x]
+  (cond
+    (map? x) (into (into #{} (map kw-str) (keys x))
+                   (mapcat deep-key-names (vals x)))
+    (sequential? x) (into #{} (mapcat deep-key-names x))
+    :else #{}))
+
+(defn- approver-attribution
+  "DERIVED honest disclosure about where the human approver's id actually
+  lives after a `:request-approval` handoff.
+
+  `operation`'s `:request-approval` node attaches the approver at
+  `[:value :approved-by]` on the record, but `store/commit-record!`
+  destructures `{:keys [op path value]}` and none of its four op branches
+  ever reads `:approved-by` back out of `value` -- and the `:commit` node
+  appends only its `:committed` fact to the store's ledger, never the
+  `:approval-granted` fact that carries `:by`. So the approver reaches
+  NEITHER the SSoT record NOR the ledger.
+
+  Rather than assert that in prose (which would silently go stale the day
+  it is fixed), this re-checks the real store at render time and returns
+  `{:approvers :on-record? :on-ledger?}` for the page to render from."
+  [db runs]
+  (let [records   (concat (store/repair-record-log-history db)
+                          (store/schedule-proposal-history db)
+                          (store/safety-concern-flag-history db)
+                          (store/return-to-service-coordination-history db))
+        names     (deep-key-names records)
+        approver? #(contains? #{"approved-by" "approved_by" "approver" "approved_by_id"}
+                              (str/lower-case %))]
+    {:approvers  (vec (sort (into #{} (keep #(:by (fact-of (:audit %) :approval-granted))) runs)))
+     :on-record? (boolean (some approver? names))
+     :on-ledger? (boolean (some #(= :approval-granted (:t %)) (store/ledger db)))}))
+
 (defn- holds
   "The HARD `:governor-hold` facts the run actually wrote to the ledger."
   [db]
@@ -382,6 +428,61 @@
        "    </table>\n"
        "  </section>\n"))
 
+(defn- attribution-section
+  "Renders the approver-attribution disclosure from the DERIVED facts, so
+  the claim tracks the code. The demo never prints an approver as though
+  the store held one -- see `approver-attribution`."
+  [{:keys [approvers on-record? on-ledger?]}]
+  (str "  <section class=\"card\">\n"
+       "    <h2>Approver attribution &mdash; what the SSoT does and does not hold</h2>\n"
+       "    <p class=\"muted\">Re-checked against the real store at render time (every committed "
+       "record in all four registers is scanned for an approver key, and the ledger for an "
+       "<code>:approval-granted</code> fact), so this disclosure cannot drift away from the code.</p>\n"
+       "    <table>\n"
+       "      <thead><tr><th>Question</th><th>Answer</th></tr></thead>\n"
+       "      <tbody>\n"
+       (rows [(row "approver id(s) on this run&rsquo;s <code>:approval-granted</code> audit fact"
+                   (if (seq approvers)
+                     (str/join " " (map code approvers))
+                     (dash)))
+              (row "carried on any committed record in the SSoT"
+                   (if on-record?
+                     "<span class=\"ok\">yes</span>"
+                     "<span class=\"critical\">no</span>"))
+              (row "carried on any fact in the store&rsquo;s audit ledger"
+                   (if on-ledger?
+                     "<span class=\"ok\">yes</span>"
+                     "<span class=\"critical\">no</span>"))])
+       "\n      </tbody>\n    </table>\n"
+       "    <p>"
+       (cond
+         (empty? approvers)
+         "This run produced no human approval, so there is no approver to attribute."
+
+         (and on-record? on-ledger?)
+         "The approver is persisted on the committed record <em>and</em> on the audit ledger."
+
+         on-record?
+         (str "The approver is persisted on the committed record, but not as a ledger fact "
+              "&mdash; the &ldquo;approved by&rdquo; text above is joined from the run&rsquo;s "
+              "own <code>:approval-granted</code> audit fact.")
+
+         :else
+         (str "<strong>The approver is not on the record.</strong> "
+              "<code>operation</code>&rsquo;s <code>:request-approval</code> node attaches it at "
+              "<code>[:value :approved-by]</code>, but <code>store/commit-record!</code> "
+              "destructures <code>{:keys [op path value]}</code> and none of its four op branches "
+              "ever reads <code>:approved-by</code> back out of <code>value</code>; the "
+              "<code>:commit</code> node likewise appends only its <code>:committed</code> fact to "
+              "the ledger, never the <code>:approval-granted</code> fact that carries "
+              "<code>:by</code>. So the approver reaches neither the SSoT record nor the ledger. "
+              "The &ldquo;approved by&rdquo; text in <em>Operation dispositions</em> above is "
+              "joined back from the run&rsquo;s own audit trail, which really does carry it "
+              "&mdash; this page states the gap plainly rather than printing an approver as "
+              "though the store held one."))
+       "</p>\n"
+       "  </section>\n"))
+
 ;; ----------------------------- the document -----------------------------
 
 (defn render
@@ -395,6 +496,7 @@
         approved  (filterv #(= :approved (:kind %)) outcomes)
         auto      (filterv #(= :auto-commit (:kind %)) outcomes)
         cov       (facts/coverage)
+        att       (approver-attribution db runs)
         notices   (store/safety-concern-flag-history db)]
     (str
      "<!DOCTYPE html>\n<html lang=\"en\"><head><meta charset=\"utf-8\">"
@@ -444,9 +546,13 @@
 
      (section "Operation dispositions (this run)"
               "One row per graph run. The outcome and the hold reason are classified from each run's own
-               audit trail; the detail text is the governor's own message, verbatim."
+               audit trail; the detail text is the governor's own message, verbatim. Where a row reads
+               &ldquo;approved by&rdquo;, that approver comes from the run's <code>:approval-granted</code>
+               audit fact and NOT from the stored record &mdash; see the next section."
               ["Thread" "Op" "Subject" "Jurisdiction" "Asset class" "Outcome" "Governor detail"]
               (run-rows db runs))
+
+     (attribution-section att)
 
      (section "Action gate (Repair Governor)"
               "Derived from <code>governor/closed-op-allowlist</code>, <code>governor/high-stakes</code>
