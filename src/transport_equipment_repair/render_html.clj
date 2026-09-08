@@ -76,7 +76,7 @@
 
   Usage: `clojure -M:dev:render-html [out-file]`
   (default `docs/samples/operator-console.html`)."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [jp-go-dds.skin]
             [langgraph.graph :as g]
             [transport-equipment-repair.advisor :as advisor]
@@ -255,7 +255,7 @@
                           (store/return-to-service-coordination-history db))
         names     (deep-key-names records)
         approver? #(contains? #{"approved-by" "approved_by" "approver" "approved_by_id"}
-                              (str/lower-case %))]
+                              (str/lower %))]
     {:approvers  (vec (sort (into #{} (keep #(:by (fact-of (:audit %) :approval-granted))) runs)))
      :on-record? (boolean (some approver? names))
      :on-ledger? (boolean (some #(= :approval-granted (:t %)) (store/ledger db)))}))
