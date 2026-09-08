@@ -28,7 +28,7 @@
   repair equipment or signs off on an airworthiness/seaworthiness/rail-
   safety-certification-authority decision (see `transport-equipment-
   repair.governor` ns docstring)."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [transport-equipment-repair.facts :as facts]))
 
 (defn- zero-pad [n w]
@@ -54,7 +54,7 @@
   ground-truth field before ANY op may commit against it."
   [asset-id jurisdiction sequence]
   (assert-record-fields! "repair-record" asset-id jurisdiction sequence)
-  (let [record-id (str (str/upper-case jurisdiction) "-RPR-" (zero-pad sequence 6))]
+  (let [record-id (str (str/upper jurisdiction) "-RPR-" (zero-pad sequence 6))]
     {"record" {"record_id" record-id "kind" "repair-record-log-entry"
                "asset_id" asset-id "jurisdiction" jurisdiction "immutable" true}
      "repair_record_number" record-id}))
@@ -74,7 +74,7 @@
   commit."
   [asset-id jurisdiction sequence]
   (assert-record-fields! "schedule-proposal" asset-id jurisdiction sequence)
-  (let [record-id (str (str/upper-case jurisdiction) "-SCH-" (zero-pad sequence 6))]
+  (let [record-id (str (str/upper jurisdiction) "-SCH-" (zero-pad sequence 6))]
     {"record" {"record_id" record-id "kind" "schedule-proposal-draft"
                "asset_id" asset-id "jurisdiction" jurisdiction "immutable" true}
      "schedule_number" record-id}))
@@ -88,7 +88,7 @@
   record is only ever committed after a human has reviewed it."
   [asset-id jurisdiction sequence]
   (assert-record-fields! "safety-concern-flag" asset-id jurisdiction sequence)
-  (let [record-id (str (str/upper-case jurisdiction) "-SCF-" (zero-pad sequence 6))]
+  (let [record-id (str (str/upper jurisdiction) "-SCF-" (zero-pad sequence 6))]
     {"record" {"record_id" record-id "kind" "safety-concern-flag-draft"
                "asset_id" asset-id "jurisdiction" jurisdiction "immutable" true}
      "concern_number" record-id}))
@@ -106,7 +106,7 @@
   RECORD an operator would keep."
   [asset-id jurisdiction sequence]
   (assert-record-fields! "return-to-service-coordination" asset-id jurisdiction sequence)
-  (let [record-id (str (str/upper-case jurisdiction) "-RTS-" (zero-pad sequence 6))]
+  (let [record-id (str (str/upper jurisdiction) "-RTS-" (zero-pad sequence 6))]
     {"record" {"record_id" record-id "kind" "return-to-service-coordination-draft"
                "asset_id" asset-id "jurisdiction" jurisdiction "immutable" true}
      "coordination_number" record-id}))
