@@ -180,10 +180,10 @@ transport can be added later behind the same protocol via a portable
 HTTP client without changing this actor's shape.
 
 ```bash
-clojure -M:dev:run    # demo: full coordination episode + every HARD hold
-clojure -M:dev:test   # test suite
-clojure -M:test       # test suite (without the local langchain-clj dev override)
-clojure -M:lint       # clj-kondo, errors fail
+kbb -M:dev:run    # demo: full coordination episode + every HARD hold
+kbb -M:dev:test   # test suite
+kbb -M:test       # test suite (without the local langchain-clj dev override)
+kbb -M:lint       # clj-kondo, errors fail
 ```
 
 ## License

@@ -1,5 +1,5 @@
 (ns transport-equipment-repair.sim
-  "Demo driver -- `clojure -M:dev:run`. Walks assets through a full
+  "Demo driver -- `kbb -M:dev:run`. Walks assets through a full
   coordination episode, exercising every governor check: log a repair
   record (auto-commits) -> propose a repair-operation schedule
   (governor-clean, asset-verified, AUTO-COMMITS at phase 3) -> flag a
