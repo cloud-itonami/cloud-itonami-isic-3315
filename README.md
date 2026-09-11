@@ -94,7 +94,7 @@ disjoint transport-equipment asset classes described above.
 | `:coordinate-return-to-service` | completed-unit return-to-customer coordination | Drafts a LOGISTICS coordination proposal (pickup/delivery scheduling, customer notification) -- NEVER an airworthiness/seaworthiness/rail-safety-certification-authority sign-off. MAY auto-commit at phase 3 when the governor is clean. |
 
 **Legal basis is data, not code** --
-`src/transport_equipment_repair/facts.cljc`'s `catalog` is the
+`src/transport_equipment_repair/facts.cljk`'s `catalog` is the
 per-(jurisdiction, asset-class) EDN source-of-truth the governor checks
 every `:schedule-repair-operation` and `:coordinate-return-to-service`
 proposal against (JPN/USA/DEU x marine-vessel/aircraft/railway-rolling-
