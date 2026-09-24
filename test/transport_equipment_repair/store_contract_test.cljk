@@ -6,7 +6,7 @@
   store-contract-test`/`installation.store-contract-test`/`electrical-
   equipment-repair.store-contract-test`/`other-equipment-repair.store-
   contract-test` for the same pattern on the sibling actors."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [transport-equipment-repair.store :as store]))
 
 (defn- backends []

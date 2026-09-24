@@ -2,7 +2,7 @@
   "Tests the mock `Notifier` + `dual-notifier` composition seam. This
   repo ships no real (JVM-only) Resend/Twilio transport to stub-and-test
   -- see `transport-equipment-repair.notify` ns docstring."
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.test :refer [deftest is]]
             [transport-equipment-repair.notify :as notify]))
 
 (deftest mock-notifier-records-mail-and-phone-sends
