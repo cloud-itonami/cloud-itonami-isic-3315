@@ -6,7 +6,7 @@
   `transport-equipment-repair.phase` ns docstring 'Actuation' section,
   matching the shape `cloud-itonami-isic-3311`/`cloud-itonami-isic-3314`/
   `cloud-itonami-isic-3319` use."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [transport-equipment-repair.phase :as phase]))
 
 (deftest flag-safety-concern-never-auto-at-any-phase
