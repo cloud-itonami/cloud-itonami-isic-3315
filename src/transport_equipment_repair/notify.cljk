@@ -17,7 +17,7 @@
 
   This repo deliberately ships NO JVM-only interop anywhere in `src/` --
   see this workspace's cljs-first `.cljc` runtime-priority rule
-  (CLAUDE.md `.cljc`/`.kotoba` runtime priority section: `kotoba wasm` >
+  (AGENTS.md `.cljc`/`.kotoba` runtime priority section: `kotoba wasm` >
   `clojurewasm` > `ClojureScript` > `nbb`, JVM/`bb` downgraded to a last
   resort) and this build's explicit no-JVM-interop mandate. A real
   transport (Resend mail / Twilio voice, or an equivalent) can be added
